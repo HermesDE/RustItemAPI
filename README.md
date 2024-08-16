@@ -303,10 +303,40 @@ Multiple ordering rules are applied in the order they appear in the array.
 
 ## 1. Select everything from the `items` table where `name` contains "Rifle"
 
+## cURL:
 ```sh
 curl -G "http://localhost:3000/api/items" \
     --data-urlencode "filters={\"name\":{\"column\":\"name\",\"comparator\":\"CONTAINS\",\"value\":\"Rifle\"}}"   
-```  
+```
+
+## JavaScript (fetch):
+```js
+const url = new URL('http://localhost:3000/api/items');
+url.searchParams.append('filters', JSON.stringify({
+  name: { column: 'name', comparator: 'CONTAINS', value: 'Rifle' }
+}));
+
+fetch(url)
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Error:', error));
+```
+
+## Python (requests):
+```py
+import requests
+import json
+
+url = 'http://localhost:3000/api/items'
+params = {
+    'filters': json.dumps({
+        'name': {'column': 'name', 'comparator': 'CONTAINS', 'value': 'Rifle'}
+    })
+}
+
+response = requests.get(url, params=params)
+print(response.json())
+```
 
 Result:
 ```sh
@@ -340,14 +370,50 @@ Result:
 ```
 <br />
 
-## 2. Get `image_url` from the `items` table where `is_deployable` is true or the `name` `CONTAINS` "pistol"
+## 2. Get `image_url` from the `items` table where `is_deployable` is true or the `name` contains "pistol"
+
+## cURL:
 ```sh
 curl -G "http://localhost:3000/api/items" \
     --data-urlencode "filters={\"is_deployable\":{\"column\":\"is_deployable\",\"comparator\":\"EQUALS\",\"value\":true},\"name\":{\"column\":\"name\",\"comparator\":\"CONTAINS\",\"value\":\"pistol\"}}" \
     --data-urlencode "columns=[\"image_url\"]" \
     --data-urlencode "logicalOp=OR"
-
 ```
+## JavaScript (fetch):
+```js
+const url = new URL('http://localhost:3000/api/items');
+url.searchParams.append('filters', JSON.stringify({
+  is_deployable: { column: 'is_deployable', comparator: 'EQUALS', value: true },
+  name: { column: 'name', comparator: 'CONTAINS', value: 'pistol' }
+}));
+url.searchParams.append('columns', JSON.stringify(['image_url']));
+url.searchParams.append('logicalOp', 'OR');
+
+fetch(url)
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Error:', error));
+```
+
+## Python (requests):
+```py
+import requests
+import json
+
+url = 'http://localhost:3000/api/items'
+params = {
+    'filters': json.dumps({
+        'is_deployable': {'column': 'is_deployable', 'comparator': 'EQUALS', 'value': True},
+        'name': {'column': 'name', 'comparator': 'CONTAINS', 'value': 'pistol'}
+    }),
+    'columns': json.dumps(['image_url']),
+    'logicalOp': 'OR'
+}
+
+response = requests.get(url, params=params)
+print(response.json())
+```
+
 Result:
 ```sh
 [
@@ -373,10 +439,43 @@ Result:
 
 ## 3. Retrieve item details in two parts
 - First, get the `item_id` from the `items` table where the `name` is "Wooden Wall".
+
+## cURL:
 ```sh
 curl -G "http://localhost:3000/api/items" \
     --data-urlencode "filters={\"name\":{\"column\":\"name\",\"comparator\":\"EQUALS\",\"value\":\"Wooden Wall\"}}" \
     --data-urlencode "columns=[\"id\"]" 
+```
+
+## JavaScript (fetch):
+```js
+const url = new URL('http://localhost:3000/api/items');
+url.searchParams.append('filters', JSON.stringify({
+  name: { column: 'name', comparator: 'EQUALS', value: 'Wooden Wall' }
+}));
+url.searchParams.append('columns', JSON.stringify(['id']));
+
+fetch(url)
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Error:', error));
+```
+
+## Python (requests):
+```py
+import requests
+import json
+
+url = 'http://localhost:3000/api/items'
+params = {
+    'filters': json.dumps({
+        'name': {'column': 'name', 'comparator': 'EQUALS', 'value': 'Wooden Wall'}
+    }),
+    'columns': json.dumps(['id'])
+}
+
+response = requests.get(url, params=params)
+print(response.json())
 ```
 
 Result:
@@ -390,6 +489,7 @@ Result:
 <br> </br>
 - Second, use that `item_id` to get `quantity`, `time`, and `sulfur` from the `durability` table where `item_id` matches, `durability_type` is 'hard', `category` is 'explosive', and `tool` is 'Rocket'.
 
+## cURL:
 ```sh
 curl -G "http://localhost:3000/api/durability" \
     --data-urlencode "filters={\"item_id\":{\"column\":\"item_id\",\"comparator\":\"EQUALS\",\"value\":921},\"durability_type\":{\"column\":\"durability_type\",\"comparator\":\"EQUALS\",\"value\":\"hard\"},\"category\":{\"column\":\"category\",\"comparator\":\"EQUALS\",\"value\":\"explosive\"},\"tool\":{\"column\":\"tool\",\"comparator\":\"EQUALS\",\"value\":\"Rocket\"}}" \
@@ -397,6 +497,44 @@ curl -G "http://localhost:3000/api/durability" \
     --data-urlencode "logicalOp=AND"
 ```
 
+## JavaScript (fetch):
+```js
+const url = new URL('http://localhost:3000/api/durability');
+url.searchParams.append('filters', JSON.stringify({
+  item_id: { column: 'item_id', comparator: 'EQUALS', value: 921 },
+  durability_type: { column: 'durability_type', comparator: 'EQUALS', value: 'hard' },
+  category: { column: 'category', comparator: 'EQUALS', value: 'explosive' },
+  tool: { column: 'tool', comparator: 'EQUALS', value: 'Rocket' }
+}));
+url.searchParams.append('columns', JSON.stringify(['quantity', 'time', 'sulfur']));
+url.searchParams.append('logicalOp', 'AND');
+
+fetch(url)
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Error:', error));
+```
+
+## Python (requests):
+```py
+import requests
+import json
+
+url = 'http://localhost:3000/api/durability'
+params = {
+    'filters': json.dumps({
+        'item_id': {'column': 'item_id', 'comparator': 'EQUALS', 'value': 921},
+        'durability_type': {'column': 'durability_type', 'comparator': 'EQUALS', 'value': 'hard'},
+        'category': {'column': 'category', 'comparator': 'EQUALS', 'value': 'explosive'},
+        'tool': {'column': 'tool', 'comparator': 'EQUALS', 'value': 'Rocket'}
+    }),
+    'columns': json.dumps(['quantity', 'time', 'sulfur']),
+    'logicalOp': 'AND'
+}
+
+response = requests.get(url, params=params)
+print(response.json())
+```
 Result:
 ```sh
 [
@@ -410,6 +548,8 @@ Result:
 <br> </br>
 
 ## 4. Get items with `name` containing "Rifle", `ordered by` `name` ascending, `limit` 5 results
+
+## cURL:
 ```sh
 curl -G "http://localhost:3000/api/items" \
     --data-urlencode "filters={\"name\":{\"column\":\"name\",\"comparator\":\"CONTAINS\",\"value\":\"Rifle\"}}" \
@@ -418,6 +558,40 @@ curl -G "http://localhost:3000/api/items" \
     --data-urlencode "limit=5"
 ```
 
+## JavaScript (fetch):
+```js
+const url = new URL('http://localhost:3000/api/items');
+url.searchParams.append('filters', JSON.stringify({
+  name: { column: 'name', comparator: 'CONTAINS', value: 'Rifle' }
+}));
+url.searchParams.append('columns', JSON.stringify(['name']));
+url.searchParams.append('orderBy', JSON.stringify([{ order1: { column: 'name', descending: false } }]));
+url.searchParams.append('limit', '5');
+
+fetch(url)
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Error:', error));
+```
+
+## Python (requests):
+```py
+import requests
+import json
+
+url = 'http://localhost:3000/api/items'
+params = {
+    'filters': json.dumps({
+        'name': {'column': 'name', 'comparator': 'CONTAINS', 'value': 'Rifle'}
+    }),
+    'columns': json.dumps(['name']),
+    'orderBy': json.dumps([{'order1': {'column': 'name', 'descending': False}}]),
+    'limit': '5'
+}
+
+response = requests.get(url, params=params)
+print(response.json())
+```
 Result:
 ```sh
 [
@@ -442,10 +616,51 @@ Result:
 <br> </br>
 
 ## 5. Get `image_url` of items with `name` in array
+
+## cURL:
 ```sh
 curl -G "http://localhost:3000/api/items" \
     --data-urlencode "filters={\"name\":{\"column\":\"name\",\"comparator\":\"IN\",\"value\":[\"5.56 Rifle Ammo\",\"Assault Rifle\",\"Bolt Action Rifle\",\"Explosive 5.56 Rifle Ammo\",\"HV 5.56 Rifle Ammo\"]}}"\
     --data-urlencode "columns=[\"image_url\"]"
+```
+
+## JavaScript (fetch):
+```js
+const url = new URL('http://localhost:3000/api/items');
+url.searchParams.append('filters', JSON.stringify({
+  name: { 
+    column: 'name', 
+    comparator: 'IN', 
+    value: ['5.56 Rifle Ammo', 'Assault Rifle', 'Bolt Action Rifle', 'Explosive 5.56 Rifle Ammo', 'HV 5.56 Rifle Ammo']
+  }
+}));
+url.searchParams.append('columns', JSON.stringify(['image_url']));
+
+fetch(url)
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Error:', error));
+```
+
+## Python (requests):
+```py
+import requests
+import json
+
+url = 'http://localhost:3000/api/items'
+params = {
+    'filters': json.dumps({
+        'name': {
+            'column': 'name', 
+            'comparator': 'IN', 
+            'value': ['5.56 Rifle Ammo', 'Assault Rifle', 'Bolt Action Rifle', 'Explosive 5.56 Rifle Ammo', 'HV 5.56 Rifle Ammo']
+        }
+    }),
+    'columns': json.dumps(['image_url'])
+}
+
+response = requests.get(url, params=params)
+print(response.json())
 ```
 
 Result:
