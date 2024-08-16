@@ -338,7 +338,7 @@ response = requests.get(url, params=params)
 print(response.json())
 ```
 
-Result:
+## Result:
 ```sh
 [
     {
@@ -414,7 +414,7 @@ response = requests.get(url, params=params)
 print(response.json())
 ```
 
-Result:
+## Result:
 ```sh
 [
     {
@@ -478,7 +478,7 @@ response = requests.get(url, params=params)
 print(response.json())
 ```
 
-Result:
+## Result:
 ```sh
 [
     {
@@ -535,7 +535,7 @@ params = {
 response = requests.get(url, params=params)
 print(response.json())
 ```
-Result:
+## Result:
 ```sh
 [
     {
@@ -592,7 +592,7 @@ params = {
 response = requests.get(url, params=params)
 print(response.json())
 ```
-Result:
+## Result:
 ```sh
 [
   {
@@ -663,7 +663,7 @@ response = requests.get(url, params=params)
 print(response.json())
 ```
 
-Result:
+## Result:
 ```sh
 [
     {
