@@ -2,27 +2,14 @@ const express = require('express');
 const mysql = require('mysql2/promise');
 require('dotenv').config();
 
-//test durability table
-
 //express code
 ////add special handling to quantity bc it can sometimes be json
-//add range handling for upkeep
 
-//upload code
-////change efficiency and chance to double
-////convert despawn_time to int
-
-
-//scraper code
-////fix result_amount *
-////check ingredients_recursive *
-////convert despawn_time to int *
-
-//add consumable table
-//fix aim_cone and weapon_table_data
-//must include 0 before . in double
+//add input sanitizer
+//add consumable table 
 const app = express();
 const port = 3000;
+const LIMIT_CAP = 100;
 
 // Middleware
 app.use(express.json());
@@ -75,12 +62,10 @@ const checkIfValid = (comparator, column) =>
 }
 
 
-// Define column-specific casting functions
 const columnCastingFunctions = {
     Loot: {
         amount: (column, comparator) =>
         {
-            // Handle behavior based on comparator
             let sql = ''
             switch (comparator)
             {
@@ -117,7 +102,6 @@ const columnCastingFunctions = {
         },
         condition: (column, comparator) =>
         {
-            // Handle behavior based on comparator
             switch (comparator)
             {
                 case 'GT':
@@ -157,7 +141,6 @@ const columnCastingFunctions = {
             return { sql: sql, values: 1, skipComparator: false }
         }
     },
-    // Add more casting rules for other tables/columns as needed
 };
 
 // Function to apply SQL casting to columns
@@ -171,7 +154,7 @@ const applyColumnCasting = (table, column, comparator) =>
     return { conditionColumn: column, valueAmt: 1, skipComparator: false };
 };
 
-const processFilters = (table, filters, columns = [], logicalOp = 'AND') =>
+const processFilters = (table, filters, columns = [], logicalOp = 'AND', limit = 20, offset = 0, orderBy = []) =>
 {
     const parsedFilters = JSON.parse(filters || '{}');
     const validLogicalOps = ['AND', 'OR', 'XOR', 'NAND', 'NOR'];
@@ -291,11 +274,31 @@ const processFilters = (table, filters, columns = [], logicalOp = 'AND') =>
         conditionsString = conditions.join(` ${tempOp} `);
         if (logicalOp === 'NAND' || logicalOp === 'NOR')
         {
-            console.log(1111)
             conditionsString = `NOT (${conditionsString})`;
         }
     }
-    const query = `SELECT ${columns.length === 0 ? '*' : columns.map(col => `\`${col}\``).join(', ')} FROM \`${table}\` ${conditionsString ? `WHERE ${conditionsString}` : ''} LIMIT 2;`;
+
+    let orderClause = '';
+    if (orderBy.length > 0)
+    {
+        const orderParts = orderBy.map(order =>
+        {
+            const orderObj = Object.values(order)[0];
+            const column = orderObj.column;
+            if (!validColumns.includes(column))
+            {
+                throw new Error(`Invalid column name in order clause: ${column}`);
+            }
+            const direction = orderObj.descending ? 'DESC' : 'ASC';
+            return `\`${column}\` ${direction}`;
+        });
+        orderClause = `ORDER BY ${orderParts.join(', ')}`;
+    }
+    console.log(orderClause)
+    limit = Math.min(Math.max(1, limit), LIMIT_CAP);
+    offset = Math.max(0, offset);
+
+    const query = `SELECT ${columns.length === 0 ? '*' : columns.map(col => `\`${col}\``).join(', ')} FROM \`${table}\` ${conditionsString ? `WHERE ${conditionsString}` : ''} ${orderClause} LIMIT ${limit} OFFSET ${offset};`;
     return { query, values };
 };
 
@@ -307,6 +310,9 @@ for (const table in allowedColumns)
         const filters = req.query.filters || '{}';
         const columns = req.query.columns ? JSON.parse(req.query.columns) : [];
         const logicalOp = req.query.logicalOp || 'AND';
+        const limit = parseInt(req.query.limit) || 20;
+        const offset = parseInt(req.query.offset) || 0;
+        const orderBy = req.query.orderBy ? JSON.parse(req.query.orderBy) : [];
 
         function buildQueryWithValues(query, values)
         {
@@ -315,11 +321,10 @@ for (const table in allowedColumns)
         try
         {
             const connection = await mysql.createConnection(dbConfig);
-            const { query, values } = processFilters(table, filters, columns, logicalOp);
+            const { query, values } = processFilters(table, filters, columns, logicalOp, limit, offset, orderBy);
             const queryWithValues = buildQueryWithValues(query, [...values]);
-            console.log(queryWithValues)
+            console.log(query)
             console.log(values)
-            // Execute query with values using parameterized query to prevent SQL injection
             const [results] = await connection.execute(query, values);
 
             await connection.end();

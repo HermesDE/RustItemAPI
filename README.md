@@ -232,12 +232,6 @@ Quantity sometimes occurs in this format for the guns category so be careful, th
 - **yield**: Yield from recycling. Example: 10.
 - **efficiency**: Efficiency of the recycler. Example: 0.6 or 0.4. Make sure to include the 0 before the period in your requests.
 
-### Recycle Table
-- **item_id**: ID of the item. Example: 123.
-- **recycler_name**: Name of the recycler. Example: "Basic Recycler".
-- **yield**: Yield from recycling. Example: 10.
-- **efficiency**: Efficiency of the recycler. Example: 0.6 or 0.4. Make sure to include the 0 before the period in your requests.
-
 ### Deployable Table
 - **item_id**: ID of the item. Example: 123.
 - **upkeep**: Necessary materials for upkeep range for the deployable item. Example: "10-20".
@@ -267,13 +261,45 @@ Quantity sometimes occurs in this format for the guns category so be careful, th
 ---
 
 ## How to Use
-You can craft your queries using filters and columns. Each column supports specific comparators like `EQUALS`, `CONTAINS`, `GT`, `LT`, and `IN`. Logical operations such as `AND`, `OR`, `XOR`, `NOR`, and `NAND` can be applied to combine multiple filters. Default operation is `AND`. If you do not specify any columns, all columns will be fetched by default.\
-\
+You can craft your queries using filters and columns. Each column supports specific comparators like `EQUALS`, `CONTAINS`, `GT`, `LT`, and `IN`. Logical operations such as `AND`, `OR`, `XOR`, `NOR`, and `NAND` can be applied to combine multiple filters. Default operation is `AND`. If you do not specify any columns, all columns will be fetched by default.
+
+Additional query parameters:
+
+- **limit**: Specify the maximum number of results to return (default: 20, maximum: 100)
+- **offset**: Specify the number of results to skip (default: 0)
+- **orderBy**: Specify the order of the results
+
 Note that for Range typed queries, `LT` will compare with the right side of range and `GT` the left side of range and `EQUALS` will return true if the value falls in the range, endpoints inclusive. Also note that `CONTAINS` is case insensitive but `EQUALS` isn't. Lastly, JSON typed queries are just json dumped into a string.
+
+### Ordering Results
+
+You can order the results using the `orderBy` parameter. The format is a JSON array of order objects:
+
+```json
+[
+    {
+        "order1": {
+            "column": "column_name",
+            "descending": false
+        }
+    },
+    {
+        "order2": {
+            "column": "another_column",
+            "descending": true
+        }
+    }
+]
+```
+
+Each object in the array represents an ordering rule. The keys ("order1", "order2", etc.) are arbitrary and used for structure.
+"column" specifies which column to order by.
+"descending" is a boolean: false for ascending order, true for descending order.
+Multiple ordering rules are applied in the order they appear in the array.
 
 ---
 
-## Examples
+# Examples
 
 ## 1. Select everything from the `items` table where `name` contains "Rifle"
 
@@ -378,6 +404,67 @@ Result:
         "quantity":"2",
         "time":"6",
         "sulfur":"2800"
+    }
+]
+```
+<br> </br>
+
+## 4. Get items with `name` containing "Rifle", `ordered by` `name` ascending, `limit` 5 results
+```sh
+curl -G "http://localhost:3000/api/items" \
+    --data-urlencode "filters={\"name\":{\"column\":\"name\",\"comparator\":\"CONTAINS\",\"value\":\"Rifle\"}}" \
+    --data-urlencode "columns=[\"name\"]"\
+    --data-urlencode "orderBy=[{\"order1\":{\"column\":\"name\",\"descending\":false}}]" \
+    --data-urlencode "limit=5"
+```
+
+Result:
+```sh
+[
+  {
+    "name": "5.56 Rifle Ammo"
+  },
+  {
+    "name": "Assault Rifle"
+  },
+  {
+    "name": "Bolt Action Rifle"
+  },
+  {
+    "name": "Explosive 5.56 Rifle Ammo"
+  },
+  {
+    "name": "HV 5.56 Rifle Ammo"
+  }
+]
+
+```
+<br> </br>
+
+## 5. Get `image_url` of items with `name` in array
+```sh
+curl -G "http://localhost:3000/api/items" \
+    --data-urlencode "filters={\"name\":{\"column\":\"name\",\"comparator\":\"IN\",\"value\":[\"5.56 Rifle Ammo\",\"Assault Rifle\",\"Bolt Action Rifle\",\"Explosive 5.56 Rifle Ammo\",\"HV 5.56 Rifle Ammo\"]}}"\
+    --data-urlencode "columns=[\"image_url\"]"
+```
+
+Result:
+```sh
+[
+    {
+        "image_url": "https://wiki.rustclash.com/img/items40/ammo.rifle.png"
+    },
+    {
+        "image_url": "https://wiki.rustclash.com/img/items40/rifle.ak.png"
+    },
+    {
+        "image_url": "https://wiki.rustclash.com/img/items40/rifle.bolt.png"
+    },
+    {
+        "image_url": "https://wiki.rustclash.com/img/items40/ammo.rifle.explosive.png"
+    },
+    {
+        "image_url": "https://wiki.rustclash.com/img/items40/ammo.rifle.hv.png"
     }
 ]
 ```
