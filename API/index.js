@@ -2,10 +2,8 @@ const express = require('express');
 const mysql = require('mysql2/promise');
 require('dotenv').config();
 
-//express code
-////add special handling to quantity bc it can sometimes be json
-
-//add input sanitizer
+//fix rustige egg char
+//fix aim cone char
 //add consumable table 
 const app = express();
 const port = 3000;
