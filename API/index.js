@@ -61,6 +61,52 @@ const checkIfValid = (comparator, column) =>
     return valid;
 }
 
+const getItemsDataByIds = async (connection, itemIds, columns) =>
+{
+    const query = `SELECT ${columns.map(col => `\`${col}\``).join(', ')} FROM Items WHERE id IN (${itemIds.map(() => '?').join(', ')})`;
+    const [results] = await connection.execute(query, itemIds);
+    console.log(query, itemIds)
+    return results;
+};
+
+const getItemIdsByFilter = async (connection, column, comparator, value) =>
+{
+    let query = "SELECT id FROM Items WHERE ";
+    let queryValues = [];
+
+    switch (comparator)
+    {
+        case 'EQUALS':
+            query += `${column} = ?`;
+            queryValues.push(value);
+            break;
+        case 'CONTAINS':
+            query += `${column} LIKE ?`;
+            queryValues.push(`%${value}%`);
+            break;
+        case 'IN':
+            query += `${column} IN (${value.map(() => '?').join(', ')})`;
+            queryValues.push(...value);
+            break;
+        case 'GT':
+            query += `${column} > ?`;
+            queryValues.push(value);
+            break;
+        case 'LT':
+            query += `${column} < ?`;
+            queryValues.push(value);
+            break;
+        default:
+            throw new Error(`Unsupported comparator for Items table column: ${comparator}`);
+    }
+
+    const [results] = await connection.execute(query, queryValues);
+    if (results.length > 0)
+    {
+        return results.map(result => result.id);
+    }
+    throw new Error(`No items found for filter: ${column} ${comparator} ${value}`);
+};
 
 const columnCastingFunctions = {
     Loot: {
@@ -154,7 +200,7 @@ const applyColumnCasting = (table, column, comparator) =>
     return { conditionColumn: column, valueAmt: 1, skipComparator: false };
 };
 
-const processFilters = (table, filters, columns = [], logicalOp = 'AND', limit = 20, offset = 0, orderBy = []) =>
+const processFilters = async (connection, table, filters, columns = [], logicalOp = 'AND', limit = 20, offset = 0, orderBy = []) =>
 {
     const parsedFilters = JSON.parse(filters || '{}');
     const validLogicalOps = ['AND', 'OR', 'XOR', 'NAND', 'NOR'];
@@ -164,7 +210,7 @@ const processFilters = (table, filters, columns = [], logicalOp = 'AND', limit =
         throw new Error(`Invalid logical operator: ${logicalOp}. Use one of ${validLogicalOps.join(', ')}.`);
     }
 
-    const validColumns = allowedColumns[table];
+    const validColumns = allowedColumns[table].concat(allowedColumns['Items']);
     if (!validColumns)
     {
         throw new Error('Invalid table name');
@@ -184,12 +230,36 @@ const processFilters = (table, filters, columns = [], logicalOp = 'AND', limit =
 
     const conditions = [];
     const values = [];
-    Object.entries(parsedFilters).forEach(([key, filter]) =>
+    const itemsTableColumns = allowedColumns['Items'].filter(col => !allowedColumns[table].includes(col));
+    const allColumnsFromItems = columns.every(col => itemsTableColumns.includes(col));
+
+    if (allColumnsFromItems && table !== 'Items')
+    {
+        const itemIdQuery = await processFilters(connection, table, filters, ['item_id'], logicalOp, limit, offset, orderBy);
+
+        // Execute the query to get item_ids
+        const [itemIdResults] = await connection.execute(itemIdQuery.query, itemIdQuery.values);
+        const itemIds = itemIdResults.map(result => result.item_id);
+
+        const itemsData = await getItemsDataByIds(connection, itemIds, columns);
+
+        return { results: itemsData, isDirectResult: true };
+    }
+
+    for (const [key, filter] of Object.entries(parsedFilters))
     {
         const { column, comparator, value } = filter;
+
+        if (itemsTableColumns.includes(column) && table !== 'Items')
+        {
+            const itemIds = await getItemIdsByFilter(connection, column, comparator, value);
+            conditions.push(`item_id IN (${itemIds.map(() => '?').join(', ')})`);
+            values.push(...itemIds);
+            continue;
+        }
+
         let { conditionColumn, valueAmt, skipComparator } = applyColumnCasting(table, column, comparator);
-        console.log(valueAmt)
-        valueAmt = valueAmt || 1
+        valueAmt = valueAmt || 1;
         const paramPlaceholder = '?';
 
         if (!checkIfValid(comparator, column))
@@ -252,7 +322,7 @@ const processFilters = (table, filters, columns = [], logicalOp = 'AND', limit =
             default:
                 throw new Error(`Unsupported comparator: ${comparator}`);
         }
-    });
+    };
 
     let conditionsString = '';
 
@@ -299,7 +369,7 @@ const processFilters = (table, filters, columns = [], logicalOp = 'AND', limit =
     offset = Math.max(0, offset);
 
     const query = `SELECT ${columns.length === 0 ? '*' : columns.map(col => `\`${col}\``).join(', ')} FROM \`${table}\` ${conditionsString ? `WHERE ${conditionsString}` : ''} ${orderClause} LIMIT ${limit} OFFSET ${offset};`;
-    return { query, values };
+    return { query, values, isDirectResult: false };
 };
 
 // Generate routes for each table
@@ -321,14 +391,24 @@ for (const table in allowedColumns)
         try
         {
             const connection = await mysql.createConnection(dbConfig);
-            const { query, values } = processFilters(table, filters, columns, logicalOp, limit, offset, orderBy);
-            const queryWithValues = buildQueryWithValues(query, [...values]);
-            console.log(query)
-            console.log(values)
-            const [results] = await connection.execute(query, values);
+            let result = await processFilters(connection, table, filters, columns, logicalOp, limit, offset, orderBy);
+            console.log(result)
+            let finalResults;
+            if (result.isDirectResult)
+            {
+                finalResults = result.results;
+            } else
+            {
+                const { query, values } = result;
+                const queryWithValues = buildQueryWithValues(query, [...values]);
+                console.log(query);
+                console.log(values);
+                const [queryResults] = await connection.execute(query, values);
+                finalResults = queryResults;
+            }
 
             await connection.end();
-            res.json(results);
+            res.json(finalResults);
         } catch (error)
         {
             res.status(400).json({ error: error.message });

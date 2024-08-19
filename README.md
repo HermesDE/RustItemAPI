@@ -263,6 +263,8 @@ Quantity sometimes occurs in this format for the guns category so be careful, th
 ## How to Use
 You can craft your queries using filters and columns. Each column supports specific comparators like `EQUALS`, `CONTAINS`, `GT`, `LT`, and `IN`. Logical operations such as `AND`, `OR`, `XOR`, `NOR`, and `NAND` can be applied to combine multiple filters. Default operation is `AND`. If you do not specify any columns, all columns will be fetched by default.
 
+Even when querying a table besides the Items table, columns from Items will always be valid and can be used as a way of bypassing intermediate steps. (See examples 3-5).
+
 Additional query parameters:
 
 - **limit**: Specify the maximum number of results to return (default: 20, maximum: 100)
@@ -339,7 +341,7 @@ print(response.json())
 ```
 
 ## Result:
-```sh
+```json
 [
     {
         "id":90,
@@ -415,7 +417,7 @@ print(response.json())
 ```
 
 ## Result:
-```sh
+```json
 [
     {
         "image_url":"https://wiki.rustclash.com/img/items40/pistol.eoka.png"
@@ -479,7 +481,7 @@ print(response.json())
 ```
 
 ## Result:
-```sh
+```json
 [
     {
         "id":921
@@ -487,8 +489,7 @@ print(response.json())
 ]
 ```
 <br> </br>
-- Second, use that `item_id` to get `quantity`, `time`, and `sulfur` from the `durability` table where `item_id` matches, `durability_type` is 'hard', `category` is 'explosive', and `tool` is 'Rocket'.
-
+- Second, use that `item_id` to get `quantity`, `time`, and `sulfur` from the `durability` table where `item_id` matches, `durability_type` is 'hard', `category` is 'explosive', and `tool` is 'Rocket'. Note that 921 will not always be the id for Wooden Wall.
 ## cURL:
 ```sh
 curl -G "http://localhost:3000/api/durability" \
@@ -536,7 +537,7 @@ response = requests.get(url, params=params)
 print(response.json())
 ```
 ## Result:
-```sh
+```json
 [
     {
         "quantity":"2",
@@ -547,7 +548,135 @@ print(response.json())
 ```
 <br> </br>
 
-## 4. Get items with `name` containing "Rifle", `ordered by` `name` ascending, `limit` 5 results
+## 4. Get durability information for "Wooden Wall" using item name directly
+
+This example demonstrates how to bypass the two-step query process by using the item name directly in the durability table query.
+
+## cURL:
+```sh
+curl -G "http://localhost:3000/api/durability" \
+    --data-urlencode "filters={\"name\":{\"column\":\"name\",\"comparator\":\"EQUALS\",\"value\":\"Wooden Wall\"},\"durability_type\":{\"column\":\"durability_type\",\"comparator\":\"EQUALS\",\"value\":\"hard\"},\"category\":{\"column\":\"category\",\"comparator\":\"EQUALS\",\"value\":\"explosive\"},\"tool\":{\"column\":\"tool\",\"comparator\":\"EQUALS\",\"value\":\"Rocket\"}}" \
+    --data-urlencode "columns=[\"quantity\",\"time\",\"sulfur\"]"\
+    --data-urlencode "logicalOp=AND"
+```
+
+## JavaScript (fetch):
+```js
+const url = new URL('http://localhost:3000/api/durability');
+url.searchParams.append('filters', JSON.stringify({
+  name: { column: 'name', comparator: 'EQUALS', value: 'Wooden Wall' },
+  durability_type: { column: 'durability_type', comparator: 'EQUALS', value: 'hard' },
+  category: { column: 'category', comparator: 'EQUALS', value: 'explosive' },
+  tool: { column: 'tool', comparator: 'EQUALS', value: 'Rocket' }
+}));
+url.searchParams.append('columns', JSON.stringify(['quantity', 'time', 'sulfur']));
+url.searchParams.append('logicalOp', 'AND');
+
+fetch(url)
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Error:', error));
+```
+
+## Python (requests)
+```py
+import requests
+import json
+
+url = 'http://localhost:3000/api/durability'
+params = {
+    'filters': json.dumps({
+        'name': {'column': 'name', 'comparator': 'EQUALS', 'value': 'Wooden Wall'},
+        'durability_type': {'column': 'durability_type', 'comparator': 'EQUALS', 'value': 'hard'},
+        'category': {'column': 'category', 'comparator': 'EQUALS', value: 'explosive'},
+        'tool': {'column': 'tool', 'comparator': 'EQUALS', 'value': 'Rocket'}
+    }),
+    'columns': json.dumps(['quantity', 'time', 'sulfur']),
+    'logicalOp': 'AND'
+}
+
+response = requests.get(url, params=params)
+print(response.json())
+```
+
+## Result:
+```json
+[
+  {
+    "quantity": "2",
+    "time": "6",
+    "sulfur": "2800"
+  }
+]
+```
+
+<br> </br>
+
+## 5. Get item names for durability entries with quantity greater than 8 and tool = 'Rocket'
+
+This example shows how to retrieve item information (name) while querying the durability table with multiple conditions.
+
+## cURL:
+```sh
+curl -G "http://localhost:3000/api/durability" \
+    --data-urlencode "filters={\"quantity\":{\"column\":\"quantity\",\"comparator\":\"GT\",\"value\":8},\"tool\":{\"column\":\"tool\",\"comparator\":\"EQUALS\",\"value\":\"Rocket\"}}" \
+    --data-urlencode "columns=[\"name\"]" \
+    --data-urlencode "logicalOp=AND"
+```
+
+## JavaScript (fetch):
+```js
+const url = new URL('http://localhost:3000/api/durability');
+url.searchParams.append('filters', JSON.stringify({
+  quantity: { column: 'quantity', comparator: 'GT', value: 8 },
+  tool: { column: 'tool', comparator: 'EQUALS', value: 'Rocket' }
+}));
+url.searchParams.append('columns', JSON.stringify(['name']));
+url.searchParams.append('logicalOp', 'AND');
+
+fetch(url)
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Error:', error));
+```
+
+## Python (requests):
+```py
+import requests
+import json
+
+url = 'http://localhost:3000/api/durability'
+params = {
+    'filters': json.dumps({
+        'quantity': {'column': 'quantity', 'comparator': 'GT', 'value': 8},
+        'tool': {'column': 'tool', 'comparator': 'EQUALS', 'value': 'Rocket'}
+    }),
+    'columns': json.dumps(['name']),
+    'logicalOp': 'AND'
+}
+
+response = requests.get(url, params=params)
+print(response.json())
+```
+
+## Result:
+```json
+[
+  { "name": "Vending Machine" },
+  { "name": "Armored Foundation" },
+  { "name": "Armored Roof" },
+  { "name": "Armored Low Wall" },
+  { "name": "Armored Floor" },
+  { "name": "Armored Doorway" },
+  { "name": "Armored Window" },
+  { "name": "Armored Steps" },
+  { "name": "Armored Floor Triangle" },
+  { "name": "Armored Triangle Foundation" }
+]
+
+```
+
+## 6. Get items with `name` containing "Rifle", `ordered by` `name` ascending, `limit` 5 results
 
 ## cURL:
 ```sh
@@ -593,7 +722,7 @@ response = requests.get(url, params=params)
 print(response.json())
 ```
 ## Result:
-```sh
+```json
 [
   {
     "name": "5.56 Rifle Ammo"
@@ -664,7 +793,7 @@ print(response.json())
 ```
 
 ## Result:
-```sh
+```json
 [
     {
         "image_url": "https://wiki.rustclash.com/img/items40/ammo.rifle.png"
