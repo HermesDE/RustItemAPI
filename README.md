@@ -205,16 +205,8 @@ Example for Ladder Hatch: "Wood, Metal Fragments".
 - **item_id**: ID of the item. Example: 123.
 - **durability_type**: Type of durability. Example: "hard" or "soft".
 - **category**: Category of the item. Example: "explosive", "torpedo", "melee", "explosive", "thrown", "guns".
-- **tool**: Tool associated with the item. Example: "Rocket" ,"Torpedo", "Rock", "Thompson", etc.
-- **quantity**: Quantity of the tool needed to break item. Example: 10.\
-Quantity sometimes occurs in this format for the guns category so be careful, this may change as it isn't quite desirable:
-
-```sh
-{
-    "ammo": "Explosive 5.56 Rifle Ammo", 
-    "quantity": "250"
-}
-```
+- **tool**: Tool associated with the item. Example: "Rocket" ,"Torpedo", "Rock", "Thompson;Pistol Bullet", "Assault Rifle;Explosive 5.56 Rifle Ammo", etc.
+- **quantity**: Quantity of the tool needed to break item. Example: 10.
 - **time**: Time it takes to break item. Example: "3600".
 - **fuel**: Fuel associated with the item. Example: 100.
 - **sulfur**: Amount of sulfur. Example: 100.
@@ -548,9 +540,9 @@ print(response.json())
 ```
 <br> </br>
 
-## 4. Get durability information for "Wooden Wall" using item name directly
+## 4. Get durability information for "Wooden Wall" using `name` directly
 
-This example demonstrates how to bypass the two-step query process by using the item name directly in the durability table query.
+This example demonstrates how to bypass the two-step query process by using `name` directly in the durability table query.
 
 ## cURL:
 ```sh
@@ -612,7 +604,7 @@ print(response.json())
 
 <br> </br>
 
-## 5. Get item names for durability entries with quantity greater than 8 and tool = 'Rocket'
+## 5. Get `name` for durability entries with `quantity` greater than 8 and `tool` = 'Rocket'
 
 This example shows how to retrieve item information (name) while querying the durability table with multiple conditions.
 

@@ -1,5 +1,7 @@
 /ScrapingScripts/
 /API/.env
 /API/node_modules/
+/API/node_modules
 /API/test.json
 plans.txt
+/API/RustItemAPI.zip
