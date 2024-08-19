@@ -817,4 +817,4 @@ print(response.json())
 - **any of your suggestions!**
 
 # Credit
-This project was only possible due to the data RustyLoot and RustLabs have collected. To RustyLoot, if you are not comfortable with me using your data for this project and I would be happy to take it down.
+This project was only possible due to the data RustClash. To RustClash, if you are not comfortable with me using your data for this project and I would be happy to take it down.
