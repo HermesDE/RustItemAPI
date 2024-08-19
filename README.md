@@ -17,10 +17,14 @@ A RESTful API for querying data about Rust items, including crafting recipes, du
 3. [Explaining the Data](#explaining-the-data)
 4. [How to Use](#how-to-use)
 5. [Examples](#examples)
+6. [Roadmap](#roadmap)
+7. [Credit](#credit)
 
 ## Introduction
 
-This API allows you to query detailed information about Rust items. Each endpoint provides access to different types of data, such as crafting recipes, item durability, loot chances, and recycling details. This README provides a comprehensive overview of the available endpoints, the columns they can access, and the supported operations for each column.
+This API allows you to query detailed information about Rust items. Each endpoint provides access to different types of data, such as crafting recipes, item durability, loot chances, and recycling details. This README provides a comprehensive overview of the available endpoints, the columns they can access, and the supported operations for each column. For now the API runs on severless Express on an AWS Lambda but that and the API URL may change.
+
+This is the first API I've made for public use so please reach out with any feedback or suggestions you may have. Thanks and enjoy!
 
 ## API Endpoints
 
@@ -299,13 +303,13 @@ Multiple ordering rules are applied in the order they appear in the array.
 
 ## cURL:
 ```sh
-curl -G "http://localhost:3000/api/items" \
+curl -G "https://hzjcnlmopbro6cnxl7wuuolaly0yoygb.lambda-url.us-west-1.on.aws/api/items" \
     --data-urlencode "filters={\"name\":{\"column\":\"name\",\"comparator\":\"CONTAINS\",\"value\":\"Rifle\"}}"   
 ```
 
 ## JavaScript (fetch):
 ```js
-const url = new URL('http://localhost:3000/api/items');
+const url = new URL('https://hzjcnlmopbro6cnxl7wuuolaly0yoygb.lambda-url.us-west-1.on.aws/api/items');
 url.searchParams.append('filters', JSON.stringify({
   name: { column: 'name', comparator: 'CONTAINS', value: 'Rifle' }
 }));
@@ -321,7 +325,7 @@ fetch(url)
 import requests
 import json
 
-url = 'http://localhost:3000/api/items'
+url = 'https://hzjcnlmopbro6cnxl7wuuolaly0yoygb.lambda-url.us-west-1.on.aws/api/items'
 params = {
     'filters': json.dumps({
         'name': {'column': 'name', 'comparator': 'CONTAINS', 'value': 'Rifle'}
@@ -368,14 +372,14 @@ print(response.json())
 
 ## cURL:
 ```sh
-curl -G "http://localhost:3000/api/items" \
+curl -G "https://hzjcnlmopbro6cnxl7wuuolaly0yoygb.lambda-url.us-west-1.on.aws/api/items" \
     --data-urlencode "filters={\"is_deployable\":{\"column\":\"is_deployable\",\"comparator\":\"EQUALS\",\"value\":true},\"name\":{\"column\":\"name\",\"comparator\":\"CONTAINS\",\"value\":\"pistol\"}}" \
     --data-urlencode "columns=[\"image_url\"]" \
     --data-urlencode "logicalOp=OR"
 ```
 ## JavaScript (fetch):
 ```js
-const url = new URL('http://localhost:3000/api/items');
+const url = new URL('https://hzjcnlmopbro6cnxl7wuuolaly0yoygb.lambda-url.us-west-1.on.aws/api/items');
 url.searchParams.append('filters', JSON.stringify({
   is_deployable: { column: 'is_deployable', comparator: 'EQUALS', value: true },
   name: { column: 'name', comparator: 'CONTAINS', value: 'pistol' }
@@ -394,7 +398,7 @@ fetch(url)
 import requests
 import json
 
-url = 'http://localhost:3000/api/items'
+url = 'https://hzjcnlmopbro6cnxl7wuuolaly0yoygb.lambda-url.us-west-1.on.aws/api/items'
 params = {
     'filters': json.dumps({
         'is_deployable': {'column': 'is_deployable', 'comparator': 'EQUALS', 'value': True},
@@ -436,14 +440,14 @@ print(response.json())
 
 ## cURL:
 ```sh
-curl -G "http://localhost:3000/api/items" \
+curl -G "https://hzjcnlmopbro6cnxl7wuuolaly0yoygb.lambda-url.us-west-1.on.aws/api/items" \
     --data-urlencode "filters={\"name\":{\"column\":\"name\",\"comparator\":\"EQUALS\",\"value\":\"Wooden Wall\"}}" \
     --data-urlencode "columns=[\"id\"]" 
 ```
 
 ## JavaScript (fetch):
 ```js
-const url = new URL('http://localhost:3000/api/items');
+const url = new URL('https://hzjcnlmopbro6cnxl7wuuolaly0yoygb.lambda-url.us-west-1.on.aws/api/items');
 url.searchParams.append('filters', JSON.stringify({
   name: { column: 'name', comparator: 'EQUALS', value: 'Wooden Wall' }
 }));
@@ -460,7 +464,7 @@ fetch(url)
 import requests
 import json
 
-url = 'http://localhost:3000/api/items'
+url = 'https://hzjcnlmopbro6cnxl7wuuolaly0yoygb.lambda-url.us-west-1.on.aws/api/items'
 params = {
     'filters': json.dumps({
         'name': {'column': 'name', 'comparator': 'EQUALS', 'value': 'Wooden Wall'}
@@ -484,7 +488,7 @@ print(response.json())
 - Second, use that `item_id` to get `quantity`, `time`, and `sulfur` from the `durability` table where `item_id` matches, `durability_type` is 'hard', `category` is 'explosive', and `tool` is 'Rocket'. Note that 921 will not always be the id for Wooden Wall.
 ## cURL:
 ```sh
-curl -G "http://localhost:3000/api/durability" \
+curl -G "https://hzjcnlmopbro6cnxl7wuuolaly0yoygb.lambda-url.us-west-1.on.aws/api/durability" \
     --data-urlencode "filters={\"item_id\":{\"column\":\"item_id\",\"comparator\":\"EQUALS\",\"value\":921},\"durability_type\":{\"column\":\"durability_type\",\"comparator\":\"EQUALS\",\"value\":\"hard\"},\"category\":{\"column\":\"category\",\"comparator\":\"EQUALS\",\"value\":\"explosive\"},\"tool\":{\"column\":\"tool\",\"comparator\":\"EQUALS\",\"value\":\"Rocket\"}}" \
     --data-urlencode "columns=[\"quantity\",\"time\",\"sulfur\"]"\
     --data-urlencode "logicalOp=AND"
@@ -492,7 +496,7 @@ curl -G "http://localhost:3000/api/durability" \
 
 ## JavaScript (fetch):
 ```js
-const url = new URL('http://localhost:3000/api/durability');
+const url = new URL('https://hzjcnlmopbro6cnxl7wuuolaly0yoygb.lambda-url.us-west-1.on.aws/api/durability');
 url.searchParams.append('filters', JSON.stringify({
   item_id: { column: 'item_id', comparator: 'EQUALS', value: 921 },
   durability_type: { column: 'durability_type', comparator: 'EQUALS', value: 'hard' },
@@ -513,7 +517,7 @@ fetch(url)
 import requests
 import json
 
-url = 'http://localhost:3000/api/durability'
+url = 'https://hzjcnlmopbro6cnxl7wuuolaly0yoygb.lambda-url.us-west-1.on.aws/api/durability'
 params = {
     'filters': json.dumps({
         'item_id': {'column': 'item_id', 'comparator': 'EQUALS', 'value': 921},
@@ -546,7 +550,7 @@ This example demonstrates how to bypass the two-step query process by using `nam
 
 ## cURL:
 ```sh
-curl -G "http://localhost:3000/api/durability" \
+curl -G "https://hzjcnlmopbro6cnxl7wuuolaly0yoygb.lambda-url.us-west-1.on.aws/api/durability" \
     --data-urlencode "filters={\"name\":{\"column\":\"name\",\"comparator\":\"EQUALS\",\"value\":\"Wooden Wall\"},\"durability_type\":{\"column\":\"durability_type\",\"comparator\":\"EQUALS\",\"value\":\"hard\"},\"category\":{\"column\":\"category\",\"comparator\":\"EQUALS\",\"value\":\"explosive\"},\"tool\":{\"column\":\"tool\",\"comparator\":\"EQUALS\",\"value\":\"Rocket\"}}" \
     --data-urlencode "columns=[\"quantity\",\"time\",\"sulfur\"]"\
     --data-urlencode "logicalOp=AND"
@@ -554,7 +558,7 @@ curl -G "http://localhost:3000/api/durability" \
 
 ## JavaScript (fetch):
 ```js
-const url = new URL('http://localhost:3000/api/durability');
+const url = new URL('https://hzjcnlmopbro6cnxl7wuuolaly0yoygb.lambda-url.us-west-1.on.aws/api/durability');
 url.searchParams.append('filters', JSON.stringify({
   name: { column: 'name', comparator: 'EQUALS', value: 'Wooden Wall' },
   durability_type: { column: 'durability_type', comparator: 'EQUALS', value: 'hard' },
@@ -575,7 +579,7 @@ fetch(url)
 import requests
 import json
 
-url = 'http://localhost:3000/api/durability'
+url = 'https://hzjcnlmopbro6cnxl7wuuolaly0yoygb.lambda-url.us-west-1.on.aws/api/durability'
 params = {
     'filters': json.dumps({
         'name': {'column': 'name', 'comparator': 'EQUALS', 'value': 'Wooden Wall'},
@@ -610,7 +614,7 @@ This example shows how to retrieve item information (name) while querying the du
 
 ## cURL:
 ```sh
-curl -G "http://localhost:3000/api/durability" \
+curl -G "https://hzjcnlmopbro6cnxl7wuuolaly0yoygb.lambda-url.us-west-1.on.aws/api/durability" \
     --data-urlencode "filters={\"quantity\":{\"column\":\"quantity\",\"comparator\":\"GT\",\"value\":8},\"tool\":{\"column\":\"tool\",\"comparator\":\"EQUALS\",\"value\":\"Rocket\"}}" \
     --data-urlencode "columns=[\"name\"]" \
     --data-urlencode "logicalOp=AND"
@@ -618,7 +622,7 @@ curl -G "http://localhost:3000/api/durability" \
 
 ## JavaScript (fetch):
 ```js
-const url = new URL('http://localhost:3000/api/durability');
+const url = new URL('https://hzjcnlmopbro6cnxl7wuuolaly0yoygb.lambda-url.us-west-1.on.aws/api/durability');
 url.searchParams.append('filters', JSON.stringify({
   quantity: { column: 'quantity', comparator: 'GT', value: 8 },
   tool: { column: 'tool', comparator: 'EQUALS', value: 'Rocket' }
@@ -637,7 +641,7 @@ fetch(url)
 import requests
 import json
 
-url = 'http://localhost:3000/api/durability'
+url = 'https://hzjcnlmopbro6cnxl7wuuolaly0yoygb.lambda-url.us-west-1.on.aws/api/durability'
 params = {
     'filters': json.dumps({
         'quantity': {'column': 'quantity', 'comparator': 'GT', 'value': 8},
@@ -672,7 +676,7 @@ print(response.json())
 
 ## cURL:
 ```sh
-curl -G "http://localhost:3000/api/items" \
+curl -G "https://hzjcnlmopbro6cnxl7wuuolaly0yoygb.lambda-url.us-west-1.on.aws/api/items" \
     --data-urlencode "filters={\"name\":{\"column\":\"name\",\"comparator\":\"CONTAINS\",\"value\":\"Rifle\"}}" \
     --data-urlencode "columns=[\"name\"]"\
     --data-urlencode "orderBy=[{\"order1\":{\"column\":\"name\",\"descending\":false}}]" \
@@ -681,7 +685,7 @@ curl -G "http://localhost:3000/api/items" \
 
 ## JavaScript (fetch):
 ```js
-const url = new URL('http://localhost:3000/api/items');
+const url = new URL('https://hzjcnlmopbro6cnxl7wuuolaly0yoygb.lambda-url.us-west-1.on.aws/api/items');
 url.searchParams.append('filters', JSON.stringify({
   name: { column: 'name', comparator: 'CONTAINS', value: 'Rifle' }
 }));
@@ -700,7 +704,7 @@ fetch(url)
 import requests
 import json
 
-url = 'http://localhost:3000/api/items'
+url = 'https://hzjcnlmopbro6cnxl7wuuolaly0yoygb.lambda-url.us-west-1.on.aws/api/items'
 params = {
     'filters': json.dumps({
         'name': {'column': 'name', 'comparator': 'CONTAINS', 'value': 'Rifle'}
@@ -740,14 +744,14 @@ print(response.json())
 
 ## cURL:
 ```sh
-curl -G "http://localhost:3000/api/items" \
+curl -G "https://hzjcnlmopbro6cnxl7wuuolaly0yoygb.lambda-url.us-west-1.on.aws/api/items" \
     --data-urlencode "filters={\"name\":{\"column\":\"name\",\"comparator\":\"IN\",\"value\":[\"5.56 Rifle Ammo\",\"Assault Rifle\",\"Bolt Action Rifle\",\"Explosive 5.56 Rifle Ammo\",\"HV 5.56 Rifle Ammo\"]}}"\
     --data-urlencode "columns=[\"image_url\"]"
 ```
 
 ## JavaScript (fetch):
 ```js
-const url = new URL('http://localhost:3000/api/items');
+const url = new URL('https://hzjcnlmopbro6cnxl7wuuolaly0yoygb.lambda-url.us-west-1.on.aws/api/items');
 url.searchParams.append('filters', JSON.stringify({
   name: { 
     column: 'name', 
@@ -768,7 +772,7 @@ fetch(url)
 import requests
 import json
 
-url = 'http://localhost:3000/api/items'
+url = 'https://hzjcnlmopbro6cnxl7wuuolaly0yoygb.lambda-url.us-west-1.on.aws/api/items'
 params = {
     'filters': json.dumps({
         'name': {
@@ -804,3 +808,13 @@ print(response.json())
     }
 ]
 ```
+
+# Roadmap
+- **consumable table for teas and food**
+- **Item durability from use**
+- **fishing table**
+- **npc/animal table**
+- **any of your suggestions!**
+
+# Credit
+This project was only possible due to the data RustyLoot and RustLabs have collected. To RustyLoot, if you are not comfortable with me using your data for this project and I would be happy to take it down.
